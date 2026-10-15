@@ -3,6 +3,7 @@ from marshmallow import Schema, fields
 
 from config import db, bcrypt
 
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -10,22 +11,28 @@ class User(db.Model):
     username = db.Column(db.String)
     _password_hash = db.Column(db.String)
 
-    # Build method to protect password_hash property
+    # Prevent direct access to the password hash
     @hybrid_property
     def password_hash(self):
-        pass
+        raise Exception('Password hashes may not be viewed.')
 
-    # Build method to set password hash property using bcrypt.generate_password_hash()
+    # Hash the password before storing it
     @password_hash.setter
     def password_hash(self, password):
-        pass
+        self._password_hash = bcrypt.generate_password_hash(
+            password
+        ).decode('utf-8')
 
-    # Build authenticate method that uses bcrypt.check_password_hash()
+    # Verify the password during login
     def authenticate(self, password):
-        pass
+        return bcrypt.check_password_hash(
+            self._password_hash,
+            password
+        )
 
     def __repr__(self):
         return f'User {self.username}, ID: {self.id}'
+
 
 class UserSchema(Schema):
     id = fields.Int()
